@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root {
+  --spice-cayenne: #D4320C;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background-color: #fafafa;
+  color: #1a1a1a;
+}
+
+#root {
+  min-height: 100svh;
+}
