@@ -2,11 +2,15 @@ import type { Sauce } from '../stores/collectionStore'
 
 interface SauceCardProps {
   sauce: Sauce
+  onClick?: () => void
 }
 
-export default function SauceCard({ sauce }: SauceCardProps) {
+export default function SauceCard({ sauce, onClick }: SauceCardProps) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+    <div
+      onClick={onClick}
+      className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md active:shadow-none"
+    >
       <h3 className="font-semibold text-gray-900">{sauce.name}</h3>
       {sauce.brand && <p className="text-sm text-gray-500">{sauce.brand}</p>}
       <div className="mt-2 flex items-center gap-3 text-sm">

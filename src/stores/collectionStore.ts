@@ -14,6 +14,7 @@ export interface Sauce {
 interface CollectionState {
   sauces: Sauce[]
   addSauce: (sauce: Sauce) => void
+  updateSauce: (id: string, updates: Partial<Omit<Sauce, 'id'>>) => void
   removeSauce: (id: string) => void
 }
 
@@ -23,6 +24,12 @@ export const useCollectionStore = create<CollectionState>()(
       sauces: [],
       addSauce: (sauce) =>
         set((state) => ({ sauces: [sauce, ...state.sauces] })),
+      updateSauce: (id, updates) =>
+        set((state) => ({
+          sauces: state.sauces.map((s) =>
+            s.id === id ? { ...s, ...updates } : s,
+          ),
+        })),
       removeSauce: (id) =>
         set((state) => ({ sauces: state.sauces.filter((s) => s.id !== id) })),
     }),

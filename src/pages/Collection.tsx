@@ -3,7 +3,11 @@ import { useCollectionStore } from '../stores/collectionStore'
 import SauceCard from '../components/SauceCard'
 import AddSauceForm from '../components/AddSauceForm'
 
-export default function Collection() {
+interface CollectionProps {
+  onSelectSauce: (id: string) => void
+}
+
+export default function Collection({ onSelectSauce }: CollectionProps) {
   const sauces = useCollectionStore((state) => state.sauces)
   const [showForm, setShowForm] = useState(false)
 
@@ -15,7 +19,11 @@ export default function Collection() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {sauces.map((sauce) => (
-            <SauceCard key={sauce.id} sauce={sauce} />
+            <SauceCard
+              key={sauce.id}
+              sauce={sauce}
+              onClick={() => onSelectSauce(sauce.id)}
+            />
           ))}
         </div>
       )}
