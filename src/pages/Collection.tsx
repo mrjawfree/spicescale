@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useCollectionStore } from '../stores/collectionStore'
 import SauceCard from '../components/SauceCard'
+import AddSauceForm from '../components/AddSauceForm'
 
 export default function Collection() {
   const sauces = useCollectionStore((state) => state.sauces)
+  const [showForm, setShowForm] = useState(false)
 
   return (
     <div>
@@ -16,6 +19,16 @@ export default function Collection() {
           ))}
         </div>
       )}
+
+      <button
+        onClick={() => setShowForm(true)}
+        className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--spice-cayenne)] text-white text-3xl shadow-lg hover:opacity-90 transition-opacity"
+        aria-label="Add sauce"
+      >
+        +
+      </button>
+
+      {showForm && <AddSauceForm onClose={() => setShowForm(false)} />}
     </div>
   )
 }

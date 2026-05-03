@@ -7,6 +7,8 @@ export interface Sauce {
   brand: string
   heat: number
   rating: number
+  heatNotes: string
+  flavorNotes: string
 }
 
 interface CollectionState {
@@ -20,7 +22,7 @@ export const useCollectionStore = create<CollectionState>()(
     (set) => ({
       sauces: [],
       addSauce: (sauce) =>
-        set((state) => ({ sauces: [...state.sauces, sauce] })),
+        set((state) => ({ sauces: [sauce, ...state.sauces] })),
       removeSauce: (id) =>
         set((state) => ({ sauces: state.sauces.filter((s) => s.id !== id) })),
     }),
