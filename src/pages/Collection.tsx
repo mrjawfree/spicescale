@@ -1,14 +1,12 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useCollectionStore } from '../stores/collectionStore'
 import SauceCard from '../components/SauceCard'
 import AddSauceForm from '../components/AddSauceForm'
 
-interface CollectionProps {
-  onSelectSauce: (id: string) => void
-}
-
-export default function Collection({ onSelectSauce }: CollectionProps) {
+export default function Collection() {
   const sauces = useCollectionStore((state) => state.sauces)
+  const navigate = useNavigate()
   const [showForm, setShowForm] = useState(false)
 
   return (
@@ -40,7 +38,7 @@ export default function Collection({ onSelectSauce }: CollectionProps) {
             <SauceCard
               key={sauce.id}
               sauce={sauce}
-              onClick={() => onSelectSauce(sauce.id)}
+              onClick={() => navigate(`/sauce/${sauce.id}`)}
             />
           ))}
         </div>

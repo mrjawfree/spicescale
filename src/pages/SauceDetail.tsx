@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useCollectionStore, type Sauce } from '../stores/collectionStore'
 
 const HEAT_TIERS: Record<number, { label: string; color: string }> = {
@@ -15,13 +16,10 @@ const HEAT_TIERS: Record<number, { label: string; color: string }> = {
   10: { label: 'Extreme', color: '#B91C1C' },
 }
 
-interface SauceDetailProps {
-  sauceId: string
-  onBack: () => void
-}
-
-export default function SauceDetail({ sauceId, onBack }: SauceDetailProps) {
-  const sauce = useCollectionStore((s) => s.sauces.find((x) => x.id === sauceId))
+export default function SauceDetail() {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const sauce = useCollectionStore((s) => s.sauces.find((x) => x.id === id))
   const updateSauce = useCollectionStore((s) => s.updateSauce)
   const removeSauce = useCollectionStore((s) => s.removeSauce)
 
@@ -50,10 +48,11 @@ export default function SauceDetail({ sauceId, onBack }: SauceDetailProps) {
     )
   }, [draft, sauce])
 
-  if (!sauce) {
-    onBack()
-    return null
-  }
+  useEffect(() => {
+    if (!sauce) navigate('/', { replace: true })
+  }, [sauce, navigate])
+
+  if (!sauce) return null
 
   function enterEdit() {
     setDraft({
@@ -76,7 +75,7 @@ export default function SauceDetail({ sauceId, onBack }: SauceDetailProps) {
 
   function saveEdit() {
     if (!draft.name.trim()) return
-    updateSauce(sauceId, {
+    updateSauce(id!, {
       name: draft.name.trim(),
       brand: draft.brand.trim(),
       heat: draft.heat,
@@ -89,9 +88,9 @@ export default function SauceDetail({ sauceId, onBack }: SauceDetailProps) {
   }
 
   function handleDelete() {
-    removeSauce(sauceId)
+    removeSauce(id!)
     toast('Sauce deleted')
-    setTimeout(onBack, 300)
+    setTimeout(() => navigate('/', { replace: true }), 300)
   }
 
   function toast(msg: string) {
@@ -122,7 +121,7 @@ export default function SauceDetail({ sauceId, onBack }: SauceDetailProps) {
           </>
         ) : (
           <>
-            <button onClick={onBack} className="text-sm text-[var(--spice-cayenne)]">
+            <button onClick={() => navigate('/')} className="text-sm text-[var(--spice-cayenne)]">
               ← Collection
             </button>
             <span className="text-sm font-semibold text-gray-900 truncate max-w-[50%]">

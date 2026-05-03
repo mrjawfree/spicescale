@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-interface WelcomeProps {
-  onComplete: () => void
-}
-
-export default function Welcome({ onComplete }: WelcomeProps) {
+export default function Welcome() {
+  const navigate = useNavigate()
   const [stage, setStage] = useState(0)
 
   useEffect(() => {
@@ -19,7 +17,7 @@ export default function Welcome({ onComplete }: WelcomeProps) {
 
   function handleGetStarted() {
     localStorage.setItem('hasSeenWelcome', 'true')
-    onComplete()
+    navigate('/', { replace: true })
   }
 
   return (
