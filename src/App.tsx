@@ -1,9 +1,17 @@
 import { useState } from 'react'
 import Collection from './pages/Collection'
 import SauceDetail from './pages/SauceDetail'
+import Welcome from './pages/Welcome'
 
 function App() {
   const [selectedSauceId, setSelectedSauceId] = useState<string | null>(null)
+  const [hasSeenWelcome, setHasSeenWelcome] = useState(
+    () => localStorage.getItem('hasSeenWelcome') === 'true'
+  )
+
+  if (!hasSeenWelcome) {
+    return <Welcome onComplete={() => setHasSeenWelcome(true)} />
+  }
 
   if (selectedSauceId) {
     return (
