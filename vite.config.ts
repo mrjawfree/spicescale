@@ -9,6 +9,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg'],
+      manifestFilename: 'manifest.json',
       manifest: {
         name: 'SpiceScale',
         short_name: 'SpiceScale',
