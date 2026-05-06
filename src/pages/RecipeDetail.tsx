@@ -44,9 +44,19 @@ export default function RecipeDetail() {
     return Math.round(scaled * 100) / 100
   }
 
-  async function handleShare() {
-    if (!recipe) return
-    setSharing(true)
+  function buildShareText() {
+    if (!recipe) return ''
+    const scale = scaledServings !== recipe.original_servings
+      ? ` (scaled to ${scaledServings} servings)`
+      : ''
+    const ingredients = recipe.ingredients
+      .map((ing) => `${scaleAmount(ing.amount)} ${ing.unit} ${ing.name}`)
+      .join('\n')
+    return `${recipe.title}${scale}\n\nIngredients:\n${ingredients}`
+  }
+
+  async function getOrCreateShareUrl(): Promise<string | null> {
+    if (!recipe) return null
 
     const { data: existing } = await supabase
       .from('recipe_shares')
@@ -56,10 +66,7 @@ export default function RecipeDetail() {
       .single()
 
     if (existing) {
-      const url = `${window.location.origin}${window.location.pathname}#/r/${existing.slug}`
-      setShareUrl(url)
-      setSharing(false)
-      return
+      return `${window.location.origin}${window.location.pathname}#/r/${existing.slug}`
     }
 
     const slug = generateSlug()
@@ -69,11 +76,47 @@ export default function RecipeDetail() {
       scaled_servings: scaledServings,
     })
 
-    if (!error) {
-      const url = `${window.location.origin}${window.location.pathname}#/r/${slug}`
-      setShareUrl(url)
+    if (error) return null
+    return `${window.location.origin}${window.location.pathname}#/r/${slug}`
+  }
+
+  async function handleShare() {
+    if (!recipe) return
+    setSharing(true)
+
+    const url = await getOrCreateShareUrl()
+    if (url) setShareUrl(url)
+
+    const text = buildShareText()
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: recipe.title,
+          text,
+          url: url ?? undefined,
+        })
+        toast('Shared!')
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          await fallbackCopy(url, text)
+        }
+      }
+    } else {
+      await fallbackCopy(url, text)
     }
+
     setSharing(false)
+  }
+
+  async function fallbackCopy(url: string | null, text: string) {
+    const content = url ? `${text}\n\n${url}` : text
+    try {
+      await navigator.clipboard.writeText(content)
+      toast('Recipe copied to clipboard!')
+    } catch {
+      toast('Could not copy to clipboard')
+    }
   }
 
   async function copyShareUrl() {
@@ -198,7 +241,7 @@ export default function RecipeDetail() {
             disabled={sharing}
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--spice-cayenne)] py-3 text-sm font-semibold text-white disabled:opacity-50"
           >
-            {sharing ? 'Creating link...' : 'Share this scale'}
+            {sharing ? 'Sharing...' : 'Share Recipe'}
           </button>
           <button
             onClick={() => setDeleting(true)}
