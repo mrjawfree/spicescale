@@ -2,15 +2,49 @@
 
 :root {
   --spice-cayenne: #D4320C;
+
+  /* Meal Planner Design Tokens (ISL-2024) */
+  --color-cayenne-500: #D4320C;
+  --color-cayenne-600: #B0270A;
+  --color-cayenne-50: #FDECE6;
+  --color-ink-900: #1A1714;
+  --color-ink-700: #4A423D;
+  --color-ink-500: #857C76;
+  --color-ink-300: #D6D1CC;
+  --color-ink-100: #F4F1EE;
+  --color-surface: #FFFFFF;
+  --color-bg: #FAF8F6;
+  --color-success-500: #2E8B57;
+  --color-warn-500: #E0A030;
+  --color-danger-500: #C42D1B;
+
+  --shadow-1: 0 1px 2px rgba(26,23,20,0.06);
+  --shadow-2: 0 4px 12px rgba(26,23,20,0.08);
+  --shadow-sheet: 0 -8px 24px rgba(26,23,20,0.12);
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: #fafafa;
-  color: #1a1a1a;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-ink-900);
 }
 
 #root {
   min-height: 100svh;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-ink-100) 25%, #ebe8e4 50%, var(--color-ink-100) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
 }

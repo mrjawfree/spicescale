@@ -9,7 +9,10 @@ import RecipeDetail from './pages/RecipeDetail'
 import SharedRecipe from './pages/SharedRecipe'
 import Settings from './pages/Settings'
 import Favorites from './pages/Favorites'
+import MealPlanner from './pages/MealPlanner'
+import ShoppingList from './pages/ShoppingList'
 import OfflineBanner from './components/OfflineBanner'
+import TabBar from './components/TabBar'
 import { useAuth } from './contexts/AuthContext'
 import { supabase } from './lib/supabase'
 import { useFavoritesStore } from './stores/favoritesStore'
@@ -39,6 +42,7 @@ function AppHeader() {
   const isRecipesActive = location.pathname.startsWith('/recipes')
   const isCollectionActive = location.pathname === '/' || location.pathname.startsWith('/sauce')
   const isFavoritesActive = location.pathname === '/favorites'
+  const isPlannerActive = location.pathname.startsWith('/planner') || location.pathname.startsWith('/shopping')
 
   return (
     <header className="bg-[#D4320C] text-white">
@@ -106,6 +110,14 @@ function AppHeader() {
             </span>
           )}
         </button>
+        <button
+          onClick={() => navigate('/planner')}
+          className={`text-sm pb-2 border-b-2 transition-colors ${
+            isPlannerActive ? 'border-white font-semibold' : 'border-transparent opacity-70 hover:opacity-100'
+          }`}
+        >
+          Meal Plan
+        </button>
       </nav>
     </header>
   )
@@ -172,6 +184,24 @@ function App() {
         element={
           <WelcomeGuard>
             <RecipeDetail />
+          </WelcomeGuard>
+        }
+      />
+      <Route
+        path="/planner"
+        element={
+          <WelcomeGuard>
+            <MealPlanner />
+            <TabBar />
+          </WelcomeGuard>
+        }
+      />
+      <Route
+        path="/shopping"
+        element={
+          <WelcomeGuard>
+            <ShoppingList />
+            <TabBar />
           </WelcomeGuard>
         }
       />
