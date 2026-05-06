@@ -111,9 +111,22 @@ function AppHeader() {
   )
 }
 
+function PushDeepLink() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const recipeId = params.get('recipe')
+    if (recipeId) {
+      navigate(`/recipes/${recipeId}`, { replace: true })
+    }
+  }, [navigate])
+  return null
+}
+
 function App() {
   return (
     <>
+    <PushDeepLink />
     <OfflineBanner />
     <Routes>
       <Route path="/welcome" element={<Welcome />} />

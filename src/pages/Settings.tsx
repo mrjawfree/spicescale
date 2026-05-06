@@ -1,8 +1,50 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const raw = atob(base64)
+  const arr = new Uint8Array(raw.length)
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i)
+  return arr
+}
+
+async function registerPushSubscription(userId: string) {
+  const reg = await navigator.serviceWorker.ready
+  let sub = await reg.pushManager.getSubscription()
+  if (!sub) {
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    })
+  }
+  const keys = sub.toJSON().keys!
+  await supabase.from('push_subscriptions').upsert(
+    {
+      user_id: userId,
+      endpoint: sub.endpoint,
+      keys_p256dh: keys.p256dh,
+      keys_auth: keys.auth,
+    },
+    { onConflict: 'user_id' }
+  )
+}
+
+async function removePushSubscription(userId: string) {
+  const reg = await navigator.serviceWorker.ready
+  const sub = await reg.pushManager.getSubscription()
+  if (sub) await sub.unsubscribe()
+  await supabase.from('push_subscriptions').delete().eq('user_id', userId)
+}
 
 export default function Settings() {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [pushEnabled, setPushEnabled] = useState(() => {
     return localStorage.getItem('pushOptIn') === 'true'
   })
@@ -16,7 +58,7 @@ export default function Settings() {
 
   const handleToggle = async () => {
     if (!pushEnabled) {
-      if (!('Notification' in window)) {
+      if (!('Notification' in window) || !('serviceWorker' in navigator)) {
         alert('Push notifications are not supported in this browser.')
         return
       }
@@ -27,22 +69,24 @@ export default function Settings() {
       if (permission === 'granted') {
         localStorage.setItem('pushOptIn', 'true')
         setPushEnabled(true)
-        console.log('[SpiceScale] Push notification opt-in: granted', {
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-        })
-      } else {
-        console.log('[SpiceScale] Push notification opt-in: denied', {
-          timestamp: new Date().toISOString(),
-          permission,
-        })
+        if (user) {
+          try {
+            await registerPushSubscription(user.id)
+          } catch (err) {
+            console.error('[SpiceScale] Failed to register push subscription', err)
+          }
+        }
       }
     } else {
       localStorage.removeItem('pushOptIn')
       setPushEnabled(false)
-      console.log('[SpiceScale] Push notification opt-out', {
-        timestamp: new Date().toISOString(),
-      })
+      if (user) {
+        try {
+          await removePushSubscription(user.id)
+        } catch (err) {
+          console.error('[SpiceScale] Failed to remove push subscription', err)
+        }
+      }
     }
   }
 
