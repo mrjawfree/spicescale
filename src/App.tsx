@@ -8,9 +8,11 @@ import MyRecipes from './pages/MyRecipes'
 import RecipeDetail from './pages/RecipeDetail'
 import SharedRecipe from './pages/SharedRecipe'
 import Settings from './pages/Settings'
+import Favorites from './pages/Favorites'
 import OfflineBanner from './components/OfflineBanner'
 import { useAuth } from './contexts/AuthContext'
 import { supabase } from './lib/supabase'
+import { useFavoritesStore } from './stores/favoritesStore'
 
 function WelcomeGuard({ children }: { children: React.ReactNode }) {
   const hasSeenWelcome = localStorage.getItem('hasSeenWelcome') === 'true'
@@ -33,8 +35,10 @@ function AppHeader() {
       .then(({ count }) => setSavedCount(count ?? 0))
   }, [user, location.pathname])
 
+  const favoritesCount = useFavoritesStore((s) => s.favorites.length)
   const isRecipesActive = location.pathname.startsWith('/recipes')
   const isCollectionActive = location.pathname === '/' || location.pathname.startsWith('/sauce')
+  const isFavoritesActive = location.pathname === '/favorites'
 
   return (
     <header className="bg-[#D4320C] text-white">
@@ -89,6 +93,19 @@ function AppHeader() {
         >
           Recipes
         </button>
+        <button
+          onClick={() => navigate('/favorites')}
+          className={`text-sm pb-2 border-b-2 transition-colors flex items-center gap-1 ${
+            isFavoritesActive ? 'border-white font-semibold' : 'border-transparent opacity-70 hover:opacity-100'
+          }`}
+        >
+          Favorites
+          {favoritesCount > 0 && (
+            <span className="text-[10px] bg-white/25 px-1.5 py-0.5 rounded-full leading-none">
+              {favoritesCount}
+            </span>
+          )}
+        </button>
       </nav>
     </header>
   )
@@ -121,6 +138,19 @@ function App() {
         element={
           <WelcomeGuard>
             <SauceDetail />
+          </WelcomeGuard>
+        }
+      />
+      <Route
+        path="/favorites"
+        element={
+          <WelcomeGuard>
+            <div className="min-h-screen bg-gray-50">
+              <AppHeader />
+              <main className="p-4">
+                <Favorites />
+              </main>
+            </div>
           </WelcomeGuard>
         }
       />

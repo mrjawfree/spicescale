@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase, type Recipe } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import RecipeForm from '../components/RecipeForm'
+import FavoriteButton from '../components/FavoriteButton'
 
 export default function MyRecipes() {
   const { user } = useAuth()
@@ -79,7 +80,10 @@ export default function MyRecipes() {
               onClick={() => navigate(`/recipes/${recipe.id}`)}
               className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md active:shadow-none"
             >
-              <h3 className="font-semibold text-gray-900">{recipe.title}</h3>
+              <div className="flex items-start justify-between">
+                <h3 className="font-semibold text-gray-900">{recipe.title}</h3>
+                <FavoriteButton id={recipe.id} type="recipe" />
+              </div>
               <p className="text-sm text-gray-500 mt-1">
                 {recipe.original_servings} servings &middot; {recipe.ingredients.length} ingredients
               </p>

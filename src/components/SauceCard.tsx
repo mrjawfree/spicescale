@@ -1,4 +1,5 @@
 import type { Sauce } from '../stores/collectionStore'
+import FavoriteButton from './FavoriteButton'
 
 interface SauceCardProps {
   sauce: Sauce
@@ -11,7 +12,10 @@ export default function SauceCard({ sauce, onClick }: SauceCardProps) {
       onClick={onClick}
       className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md active:shadow-none"
     >
-      <h3 className="font-semibold text-gray-900">{sauce.name}</h3>
+      <div className="flex items-start justify-between">
+        <h3 className="font-semibold text-gray-900">{sauce.name}</h3>
+        <FavoriteButton id={sauce.id} type="sauce" />
+      </div>
       {sauce.brand && <p className="text-sm text-gray-500">{sauce.brand}</p>}
       <div className="mt-2 flex items-center gap-3 text-sm">
         <span>Heat: {sauce.heat}/10</span>
