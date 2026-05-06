@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, type Recipe } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import RecipeForm from '../components/RecipeForm'
 import FavoriteButton from '../components/FavoriteButton'
+import StarRating from '../components/StarRating'
+import { useRecipeRatingStore } from '../stores/recipeRatingStore'
 
 export default function MyRecipes() {
   const { user } = useAuth()
@@ -11,6 +13,21 @@ export default function MyRecipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [sortByRating, setSortByRating] = useState(false)
+  const [showRatedOnly, setShowRatedOnly] = useState(false)
+  const ratings = useRecipeRatingStore((s) => s.ratings)
+  const getRating = useRecipeRatingStore((s) => s.getRating)
+
+  const displayedRecipes = useMemo(() => {
+    let list = [...recipes]
+    if (showRatedOnly) {
+      list = list.filter((r) => (ratings[r.id] ?? 0) > 0)
+    }
+    if (sortByRating) {
+      list.sort((a, b) => (ratings[b.id] ?? 0) - (ratings[a.id] ?? 0))
+    }
+    return list
+  }, [recipes, ratings, sortByRating, showRatedOnly])
 
   useEffect(() => {
     if (!user) return
@@ -47,7 +64,7 @@ export default function MyRecipes() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <h2 className="text-lg font-semibold">My Recipes</h2>
         <button
           onClick={() => setShowForm(true)}
@@ -56,9 +73,46 @@ export default function MyRecipes() {
           + New Recipe
         </button>
       </div>
+      {recipes.length > 0 && (
+        <div className="flex gap-2 mb-4">
+          <button
+            onClick={() => setShowRatedOnly(!showRatedOnly)}
+            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+              showRatedOnly
+                ? 'bg-[var(--spice-cayenne)] text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            My Ratings
+          </button>
+          <button
+            onClick={() => setSortByRating(!sortByRating)}
+            className={`text-xs px-3 py-1.5 rounded-full font-medium transition-colors ${
+              sortByRating
+                ? 'bg-[var(--spice-cayenne)] text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Highest Rated
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-sm text-gray-400 text-center py-8">Loading...</p>
+      ) : showRatedOnly && displayedRecipes.length === 0 ? (
+        <div className="flex flex-col items-center justify-center text-center py-16 px-4 bg-[#FFFBF5] rounded-2xl">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">No rated recipes</h3>
+          <p className="text-gray-500 mb-6 max-w-xs">
+            Rate your recipes from their detail page to see them here.
+          </p>
+          <button
+            onClick={() => setShowRatedOnly(false)}
+            className="bg-[var(--spice-cayenne)] text-white font-semibold px-6 py-3 rounded-full hover:opacity-90 transition-opacity"
+          >
+            Show all recipes
+          </button>
+        </div>
       ) : recipes.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-center py-16 px-4 bg-[#FFFBF5] rounded-2xl">
           <h3 className="text-xl font-bold text-gray-900 mb-2">No recipes yet</h3>
@@ -74,7 +128,7 @@ export default function MyRecipes() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recipes.map((recipe) => (
+          {displayedRecipes.map((recipe) => (
             <div
               key={recipe.id}
               onClick={() => navigate(`/recipes/${recipe.id}`)}
@@ -87,6 +141,11 @@ export default function MyRecipes() {
               <p className="text-sm text-gray-500 mt-1">
                 {recipe.original_servings} servings &middot; {recipe.ingredients.length} ingredients
               </p>
+              {getRating(recipe.id) > 0 && (
+                <div className="mt-2">
+                  <StarRating rating={getRating(recipe.id)} size="sm" />
+                </div>
+              )}
               {recipe.source_url && (
                 <p className="text-xs text-gray-400 mt-2 truncate">{recipe.source_url}</p>
               )}

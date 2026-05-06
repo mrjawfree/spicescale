@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase, type Recipe } from '../lib/supabase'
+import StarRating from '../components/StarRating'
+import { useRecipeRatingStore } from '../stores/recipeRatingStore'
 
 function generateSlug() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -19,6 +21,8 @@ export default function RecipeDetail() {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const rating = useRecipeRatingStore((s) => s.getRating(id!))
+  const setRating = useRecipeRatingStore((s) => s.setRating)
 
   useEffect(() => {
     loadRecipe()
@@ -179,6 +183,27 @@ export default function RecipeDetail() {
               {recipe.source_url}
             </a>
           )}
+        </div>
+
+        <div className="rounded-xl bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold text-gray-900">Your Rating</p>
+            {rating > 0 && (
+              <button
+                onClick={() => setRating(id!, 0)}
+                className="text-xs text-gray-400 hover:text-gray-600"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <div className="mt-2">
+            <StarRating
+              rating={rating}
+              onRate={(r) => setRating(id!, r)}
+              size="lg"
+            />
+          </div>
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow-sm">
