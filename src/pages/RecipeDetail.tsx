@@ -23,9 +23,16 @@ export default function RecipeDetail() {
   const [deleting, setDeleting] = useState(false)
   const rating = useRecipeRatingStore((s) => s.getRating(id!))
   const setRating = useRecipeRatingStore((s) => s.setRating)
+  const aggregate = useRecipeRatingStore((s) => s.getAggregate(id!))
+  const fetchAggregate = useRecipeRatingStore((s) => s.fetchAggregate)
+  const syncFromSupabase = useRecipeRatingStore((s) => s.syncFromSupabase)
 
   useEffect(() => {
     loadRecipe()
+    if (id) {
+      fetchAggregate(id)
+      syncFromSupabase(id)
+    }
   }, [id])
 
   async function loadRecipe() {
@@ -204,6 +211,14 @@ export default function RecipeDetail() {
               size="lg"
             />
           </div>
+          {aggregate && aggregate.count > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+              <StarRating rating={Math.round(aggregate.average)} size="sm" />
+              <span className="text-sm text-gray-500">
+                {aggregate.average.toFixed(1)} avg ({aggregate.count} {aggregate.count === 1 ? 'rating' : 'ratings'})
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow-sm">
