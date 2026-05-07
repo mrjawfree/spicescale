@@ -130,7 +130,7 @@ const SAMPLE_RECIPES: Suggestion[] = [
   { recipeId: '12', name: 'Moroccan Chicken Tagine', spicesOwned: 4, spicesTotal: 6, prepMin: 45, difficulty: 3, ingredients: [{ name: 'Chicken thigh', qty: '600g', category: 'Meat' }, { name: 'Dried apricots', qty: '100g', category: 'Pantry' }, { name: 'Yellow onion', qty: '2', category: 'Produce' }, { name: 'Olives', qty: '100g', category: 'Pantry' }] },
 ]
 
-export function getSuggestions(mealType: MealType): Suggestion[] {
+export function getSuggestions(_mealType: MealType): Suggestion[] {
   const shuffled = [...SAMPLE_RECIPES].sort(() => Math.random() - 0.5)
   return shuffled.slice(0, 3)
 }
