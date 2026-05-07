@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useMealPlanStore, getSuggestions, type MealType, type MealRef, type Suggestion } from '../stores/mealPlanStore'
+import { useMealHistoryStore } from '../stores/mealHistoryStore'
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const MEALS: { label: string; key: MealType }[] = [
@@ -192,6 +193,7 @@ function SuggestionSheet({
 
 export default function MealPlanner() {
   const { weekStart, days, setMeal, navigateWeek } = useMealPlanStore()
+  const { addEntry, removeEntry } = useMealHistoryStore()
   const [sheetTarget, setSheetTarget] = useState<{ day: string; mealType: MealType } | null>(null)
   const [showToast, setShowToast] = useState(false)
   const todayStr = new Date().toISOString().split('T')[0]
@@ -215,11 +217,13 @@ export default function MealPlanner() {
       spicesTotal: suggestion.spicesTotal,
     }
     setMeal(sheetTarget.day, sheetTarget.mealType, meal)
+    addEntry({ date: sheetTarget.day, name: suggestion.name })
     setSheetTarget(null)
   }
 
   function handleRemove(date: string, mealType: MealType) {
     setMeal(date, mealType, undefined)
+    removeEntry(date)
   }
 
   return (

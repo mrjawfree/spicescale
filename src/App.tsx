@@ -10,6 +10,7 @@ import SharedRecipe from './pages/SharedRecipe'
 import Settings from './pages/Settings'
 import Favorites from './pages/Favorites'
 import MealPlanner from './pages/MealPlanner'
+import MealHistory from './pages/MealHistory'
 import ShoppingList from './pages/ShoppingList'
 import OfflineBanner from './components/OfflineBanner'
 import TabBar from './components/TabBar'
@@ -42,6 +43,7 @@ function AppHeader() {
   const isRecipesActive = location.pathname.startsWith('/recipes')
   const isCollectionActive = location.pathname === '/' || location.pathname.startsWith('/sauce')
   const isFavoritesActive = location.pathname === '/favorites'
+  const isHistoryActive = location.pathname === '/history'
   const isPlannerActive = location.pathname.startsWith('/planner') || location.pathname.startsWith('/shopping')
 
   return (
@@ -118,6 +120,14 @@ function AppHeader() {
         >
           Meal Plan
         </button>
+        <button
+          onClick={() => navigate('/history')}
+          className={`text-sm pb-2 border-b-2 transition-colors ${
+            isHistoryActive ? 'border-white font-semibold' : 'border-transparent opacity-70 hover:opacity-100'
+          }`}
+        >
+          History
+        </button>
       </nav>
     </header>
   )
@@ -184,6 +194,19 @@ function App() {
         element={
           <WelcomeGuard>
             <RecipeDetail />
+          </WelcomeGuard>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <WelcomeGuard>
+            <div className="min-h-screen bg-gray-50">
+              <AppHeader />
+              <main className="p-4">
+                <MealHistory />
+              </main>
+            </div>
           </WelcomeGuard>
         }
       />
