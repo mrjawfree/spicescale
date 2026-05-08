@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 const TABS = [
   { key: 'today', label: 'Today', icon: '◉', path: '/' },
   { key: 'plan', label: 'Plan', icon: '📅', path: '/planner' },
+  { key: 'history', label: 'History', icon: '📆', path: '/history' },
   { key: 'shop', label: 'Shop', icon: '🛒', path: '/shopping' },
   { key: 'you', label: 'You', icon: '👤', path: '/settings' },
 ]
