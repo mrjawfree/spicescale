@@ -8,6 +8,7 @@ import MyRecipes from './pages/MyRecipes'
 import RecipeDetail from './pages/RecipeDetail'
 import SharedRecipe from './pages/SharedRecipe'
 import Settings from './pages/Settings'
+import Profile from './pages/Profile'
 import Favorites from './pages/Favorites'
 import MealPlanner from './pages/MealPlanner'
 import ShoppingList from './pages/ShoppingList'
@@ -26,7 +27,7 @@ function WelcomeGuard({ children }: { children: React.ReactNode }) {
 function AppHeader() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const [savedCount, setSavedCount] = useState(0)
 
   useEffect(() => {
@@ -56,8 +57,16 @@ function AppHeader() {
                   {savedCount} saved
                 </span>
               )}
-              <button onClick={signOut} className="text-xs opacity-80 hover:opacity-100">
-                Sign out
+              <button
+                onClick={() => navigate('/profile')}
+                className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold hover:bg-white/30 transition-colors overflow-hidden"
+                aria-label="Profile"
+              >
+                {user.user_metadata?.avatar_url ? (
+                  <img src={user.user_metadata.avatar_url as string} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  (user.email?.charAt(0) ?? '?').toUpperCase()
+                )}
               </button>
             </>
           ) : (
@@ -132,6 +141,7 @@ function App() {
       <Route path="/auth" element={<Auth />} />
       <Route path="/r/:slug" element={<SharedRecipe />} />
       <Route path="/settings" element={<WelcomeGuard><Settings /></WelcomeGuard>} />
+      <Route path="/profile" element={<WelcomeGuard><Profile /></WelcomeGuard>} />
       <Route
         path="/"
         element={

@@ -5,13 +5,26 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
+export interface Nutrition {
+  calories?: number | null
+  protein?: number | null
+  fat?: number | null
+  carbs?: number | null
+  fiber?: number | null
+  sodium?: number | null
+}
+
 export interface Recipe {
   id: string
   user_id: string
   title: string
   source_url: string | null
+  image_url: string | null
+  spice_level: number | null
   original_servings: number
   ingredients: Ingredient[]
+  instructions: string[] | null
+  nutrition: Nutrition | null
   created_at: string
 }
 
