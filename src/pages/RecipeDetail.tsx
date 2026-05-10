@@ -11,6 +11,32 @@ function generateSlug() {
   return slug
 }
 
+function SpiceLevelIndicator({ level }: { level: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <div
+            key={n}
+            className="w-5 h-5 rounded-full border-2 transition-colors"
+            style={{
+              backgroundColor: n <= level ? '#D4320C' : 'transparent',
+              borderColor: n <= level ? '#D4320C' : '#D6D1CC',
+            }}
+          />
+        ))}
+      </div>
+      <span className="text-sm font-medium" style={{ color: '#D4320C' }}>
+        {level === 1 && 'Mild'}
+        {level === 2 && 'Medium'}
+        {level === 3 && 'Hot'}
+        {level === 4 && 'Very Hot'}
+        {level === 5 && 'Extreme'}
+      </span>
+    </div>
+  )
+}
+
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -165,6 +191,8 @@ export default function RecipeDetail() {
     )
   }
 
+  const nutrition = recipe.nutrition
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-30 flex items-center justify-between bg-white px-4 py-3 shadow-sm">
@@ -177,7 +205,35 @@ export default function RecipeDetail() {
         <div className="w-16" />
       </header>
 
+      {/* Hero Image */}
+      {recipe.image_url ? (
+        <div className="relative w-full h-56 sm:h-72 bg-gray-200 overflow-hidden">
+          <img
+            src={recipe.image_url}
+            alt={recipe.title}
+            className="w-full h-full object-cover"
+          />
+          {recipe.spice_level && (
+            <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1.5 shadow-sm">
+              <SpiceLevelIndicator level={recipe.spice_level} />
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="w-full h-40 sm:h-56 bg-gradient-to-br from-[#D4320C]/10 via-[#D4320C]/5 to-orange-50 flex items-center justify-center">
+          <div className="text-center">
+            <span className="text-5xl">🌶️</span>
+            {recipe.spice_level && (
+              <div className="mt-3">
+                <SpiceLevelIndicator level={recipe.spice_level} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3 p-4">
+        {/* Title & Spice Level */}
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <h2 className="text-2xl font-bold text-gray-900">{recipe.title}</h2>
           {recipe.source_url && (
@@ -190,8 +246,14 @@ export default function RecipeDetail() {
               {recipe.source_url}
             </a>
           )}
+          {recipe.spice_level && !recipe.image_url && (
+            <div className="mt-3">
+              <SpiceLevelIndicator level={recipe.spice_level} />
+            </div>
+          )}
         </div>
 
+        {/* Rating */}
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-gray-900">Your Rating</p>
@@ -221,6 +283,7 @@ export default function RecipeDetail() {
           )}
         </div>
 
+        {/* Scale Servings */}
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-gray-900">Scale Servings</p>
@@ -258,13 +321,28 @@ export default function RecipeDetail() {
           )}
         </div>
 
+        {/* Ingredients with spice-level accent */}
         <div className="rounded-xl bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-gray-900 mb-3">
-            Ingredients ({recipe.ingredients.length})
-          </p>
+          <div className="flex items-center gap-2 mb-3">
+            <p className="text-sm font-semibold text-gray-900">
+              Ingredients ({recipe.ingredients.length})
+            </p>
+            {recipe.spice_level && recipe.spice_level >= 3 && (
+              <span
+                className="text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: '#D4320C15', color: '#D4320C' }}
+              >
+                🔥 Spicy
+              </span>
+            )}
+          </div>
           <ul className="space-y-2">
             {recipe.ingredients.map((ing, i) => (
               <li key={i} className="flex items-baseline gap-2 text-sm">
+                <span
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5"
+                  style={{ backgroundColor: recipe.spice_level ? '#D4320C' : '#D6D1CC' }}
+                />
                 <span className="font-semibold text-gray-900 min-w-[3rem] text-right">
                   {scaleAmount(ing.amount)}
                 </span>
@@ -275,6 +353,73 @@ export default function RecipeDetail() {
           </ul>
         </div>
 
+        {/* Step-by-Step Instructions */}
+        {recipe.instructions && recipe.instructions.length > 0 && (
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900 mb-3">Instructions</p>
+            <ol className="space-y-4">
+              {recipe.instructions.map((step, i) => (
+                <li key={i} className="flex gap-3">
+                  <div
+                    className="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+                    style={{ backgroundColor: '#D4320C' }}
+                  >
+                    {i + 1}
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed pt-1">{step}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {/* Nutrition Facts */}
+        {nutrition && (
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900 mb-3">Nutrition Facts</p>
+            <p className="text-xs text-gray-400 mb-3">Per serving</p>
+            <div className="grid grid-cols-3 gap-3">
+              {nutrition.calories != null && (
+                <div className="text-center rounded-lg bg-gray-50 p-3">
+                  <p className="text-lg font-bold text-gray-900">{nutrition.calories}</p>
+                  <p className="text-xs text-gray-500">Calories</p>
+                </div>
+              )}
+              {nutrition.protein != null && (
+                <div className="text-center rounded-lg bg-gray-50 p-3">
+                  <p className="text-lg font-bold text-gray-900">{nutrition.protein}g</p>
+                  <p className="text-xs text-gray-500">Protein</p>
+                </div>
+              )}
+              {nutrition.fat != null && (
+                <div className="text-center rounded-lg bg-gray-50 p-3">
+                  <p className="text-lg font-bold text-gray-900">{nutrition.fat}g</p>
+                  <p className="text-xs text-gray-500">Fat</p>
+                </div>
+              )}
+              {nutrition.carbs != null && (
+                <div className="text-center rounded-lg bg-gray-50 p-3">
+                  <p className="text-lg font-bold text-gray-900">{nutrition.carbs}g</p>
+                  <p className="text-xs text-gray-500">Carbs</p>
+                </div>
+              )}
+              {nutrition.fiber != null && (
+                <div className="text-center rounded-lg bg-gray-50 p-3">
+                  <p className="text-lg font-bold text-gray-900">{nutrition.fiber}g</p>
+                  <p className="text-xs text-gray-500">Fiber</p>
+                </div>
+              )}
+              {nutrition.sodium != null && (
+                <div className="text-center rounded-lg bg-gray-50 p-3">
+                  <p className="text-lg font-bold text-gray-900">{nutrition.sodium}mg</p>
+                  <p className="text-xs text-gray-500">Sodium</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
         <div className="flex gap-3">
           <button
             onClick={handleShare}
