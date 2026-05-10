@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase, type Recipe } from '../lib/supabase'
 import StarRating from '../components/StarRating'
+import BookmarkButton from '../components/BookmarkButton'
 import { useRecipeRatingStore } from '../stores/recipeRatingStore'
 
 function generateSlug() {
@@ -174,12 +175,29 @@ export default function RecipeDetail() {
         <span className="text-sm font-semibold text-gray-900 truncate max-w-[60%]">
           {recipe.title}
         </span>
-        <div className="w-16" />
+        <BookmarkButton recipeId={recipe.id} size="md" />
       </header>
 
       <div className="space-y-3 p-4">
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <h2 className="text-2xl font-bold text-gray-900">{recipe.title}</h2>
+          {recipe.spice_level && (
+            <div className="flex items-center gap-1.5 mt-2">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <span
+                  key={level}
+                  className={`w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold ${
+                    level <= recipe.spice_level!
+                      ? 'bg-[var(--spice-cayenne)] text-white'
+                      : 'bg-gray-100 text-gray-300'
+                  }`}
+                >
+                  {level}
+                </span>
+              ))}
+              <span className="text-xs text-gray-500 ml-1">spice</span>
+            </div>
+          )}
           {recipe.source_url && (
             <a
               href={recipe.source_url}
@@ -274,6 +292,24 @@ export default function RecipeDetail() {
             ))}
           </ul>
         </div>
+
+        {recipe.instructions && recipe.instructions.length > 0 && (
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900 mb-3">
+              Steps ({recipe.instructions.length})
+            </p>
+            <ol className="space-y-3">
+              {recipe.instructions.map((step, i) => (
+                <li key={i} className="flex gap-3 text-sm">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-[var(--spice-cayenne)] text-white text-xs font-bold flex items-center justify-center mt-0.5">
+                    {i + 1}
+                  </span>
+                  <span className="text-gray-700">{step}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
 
         <div className="flex gap-3">
           <button

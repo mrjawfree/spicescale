@@ -7,14 +7,18 @@ interface RecipeFormProps {
   onSaved: () => void
 }
 
+const SPICE_LABELS = ['Mild', 'Medium', 'Hot', 'Very Hot', 'Extreme']
+
 export default function RecipeForm({ onClose, onSaved }: RecipeFormProps) {
   const { user } = useAuth()
   const [title, setTitle] = useState('')
   const [sourceUrl, setSourceUrl] = useState('')
   const [servings, setServings] = useState(4)
+  const [spiceLevel, setSpiceLevel] = useState<number>(3)
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { name: '', amount: 0, unit: '' },
   ])
+  const [steps, setSteps] = useState<string[]>([''])
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,6 +37,19 @@ export default function RecipeForm({ onClose, onSaved }: RecipeFormProps) {
     setIngredients(ingredients.filter((_, i) => i !== index))
   }
 
+  function addStep() {
+    setSteps([...steps, ''])
+  }
+
+  function updateStep(index: number, value: string) {
+    setSteps(steps.map((s, i) => (i === index ? value : s)))
+  }
+
+  function removeStep(index: number) {
+    if (steps.length <= 1) return
+    setSteps(steps.filter((_, i) => i !== index))
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!user || !title.trim()) return
@@ -43,6 +60,8 @@ export default function RecipeForm({ onClose, onSaved }: RecipeFormProps) {
       return
     }
 
+    const validSteps = steps.filter((s) => s.trim())
+
     setSubmitting(true)
     setError(null)
 
@@ -52,6 +71,8 @@ export default function RecipeForm({ onClose, onSaved }: RecipeFormProps) {
       source_url: sourceUrl.trim() || null,
       original_servings: servings,
       ingredients: validIngredients,
+      instructions: validSteps.length > 0 ? validSteps : null,
+      spice_level: spiceLevel,
     })
 
     setSubmitting(false)
@@ -119,6 +140,28 @@ export default function RecipeForm({ onClose, onSaved }: RecipeFormProps) {
           </div>
 
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Spice Level: {spiceLevel} — {SPICE_LABELS[spiceLevel - 1]}
+            </label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => setSpiceLevel(level)}
+                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                    spiceLevel >= level
+                      ? 'bg-[var(--spice-cayenne)] text-white'
+                      : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                  }`}
+                >
+                  {level}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-gray-700">Ingredients</label>
               <button
@@ -161,6 +204,45 @@ export default function RecipeForm({ onClose, onSaved }: RecipeFormProps) {
                     <button
                       type="button"
                       onClick={() => removeIngredient(i)}
+                      className="text-gray-400 hover:text-red-500 text-lg leading-none pt-1"
+                    >
+                      &times;
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-gray-700">Steps</label>
+              <button
+                type="button"
+                onClick={addStep}
+                className="text-xs font-semibold text-[var(--spice-cayenne)]"
+              >
+                + Add Step
+              </button>
+            </div>
+            <div className="space-y-2">
+              {steps.map((step, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <span className="text-xs font-semibold text-gray-400 mt-2.5 min-w-[1.5rem] text-right">
+                    {i + 1}.
+                  </span>
+                  <textarea
+                    value={step}
+                    onChange={(e) => updateStep(i, e.target.value)}
+                    placeholder={`Step ${i + 1}`}
+                    maxLength={500}
+                    rows={2}
+                    className="flex-1 rounded-lg border border-gray-300 px-2 py-2 text-sm focus:border-[var(--spice-cayenne)] focus:outline-none focus:ring-1 focus:ring-[var(--spice-cayenne)] resize-none"
+                  />
+                  {steps.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeStep(i)}
                       className="text-gray-400 hover:text-red-500 text-lg leading-none pt-1"
                     >
                       &times;

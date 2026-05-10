@@ -4,6 +4,7 @@ import { supabase, type Recipe } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import RecipeForm from '../components/RecipeForm'
 import FavoriteButton from '../components/FavoriteButton'
+import BookmarkButton from '../components/BookmarkButton'
 import StarRating from '../components/StarRating'
 import { useRecipeRatingStore } from '../stores/recipeRatingStore'
 
@@ -136,10 +137,14 @@ export default function MyRecipes() {
             >
               <div className="flex items-start justify-between">
                 <h3 className="font-semibold text-gray-900">{recipe.title}</h3>
-                <FavoriteButton id={recipe.id} type="recipe" />
+                <div className="flex items-center gap-1">
+                  <BookmarkButton recipeId={recipe.id} />
+                  <FavoriteButton id={recipe.id} type="recipe" />
+                </div>
               </div>
               <p className="text-sm text-gray-500 mt-1">
                 {recipe.original_servings} servings &middot; {recipe.ingredients.length} ingredients
+                {recipe.spice_level ? ` · ${'\u{1F336}'.repeat(Math.min(recipe.spice_level, 5))}` : ''}
               </p>
               {getRating(recipe.id) > 0 && (
                 <div className="mt-2">

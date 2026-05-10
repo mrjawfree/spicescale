@@ -17,6 +17,7 @@ import TabBar from './components/TabBar'
 import { useAuth } from './contexts/AuthContext'
 import { supabase } from './lib/supabase'
 import { useFavoritesStore } from './stores/favoritesStore'
+import { useSavedRecipesStore } from './stores/savedRecipesStore'
 
 function WelcomeGuard({ children }: { children: React.ReactNode }) {
   const hasSeenWelcome = localStorage.getItem('hasSeenWelcome') === 'true'
@@ -29,9 +30,11 @@ function AppHeader() {
   const location = useLocation()
   const { user } = useAuth()
   const [savedCount, setSavedCount] = useState(0)
+  const fetchSaved = useSavedRecipesStore((s) => s.fetchSaved)
 
   useEffect(() => {
     if (!user) { setSavedCount(0); return }
+    fetchSaved(user.id)
     supabase
       .from('recipes')
       .select('id', { count: 'exact', head: true })
