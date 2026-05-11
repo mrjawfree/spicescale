@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase, type Recipe } from '../lib/supabase'
 import StarRating from '../components/StarRating'
 import { useRecipeRatingStore } from '../stores/recipeRatingStore'
+import { useAuth } from '../contexts/AuthContext'
 
 function generateSlug() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
@@ -11,9 +12,21 @@ function generateSlug() {
   return slug
 }
 
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  const days = Math.floor(hrs / 24)
+  if (days < 30) return `${days}d ago`
+  return new Date(dateStr).toLocaleDateString()
+}
+
 export default function RecipeDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [recipe, setRecipe] = useState<Recipe | null>(null)
   const [loading, setLoading] = useState(true)
   const [scaledServings, setScaledServings] = useState(0)
@@ -21,19 +34,29 @@ export default function RecipeDetail() {
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [reviewDraft, setReviewDraft] = useState('')
+  const [showReviewForm, setShowReviewForm] = useState(false)
   const rating = useRecipeRatingStore((s) => s.getRating(id!))
   const setRating = useRecipeRatingStore((s) => s.setRating)
+  const reviewText = useRecipeRatingStore((s) => s.getReviewText(id!))
   const aggregate = useRecipeRatingStore((s) => s.getAggregate(id!))
   const fetchAggregate = useRecipeRatingStore((s) => s.fetchAggregate)
+  const fetchReviews = useRecipeRatingStore((s) => s.fetchReviews)
+  const reviews = useRecipeRatingStore((s) => s.getReviews(id!))
   const syncFromSupabase = useRecipeRatingStore((s) => s.syncFromSupabase)
 
   useEffect(() => {
     loadRecipe()
     if (id) {
       fetchAggregate(id)
+      fetchReviews(id)
       syncFromSupabase(id)
     }
   }, [id])
+
+  useEffect(() => {
+    setReviewDraft(reviewText)
+  }, [reviewText])
 
   async function loadRecipe() {
     setLoading(true)
@@ -145,6 +168,13 @@ export default function RecipeDetail() {
     setTimeout(() => navigate('/recipes', { replace: true }), 300)
   }
 
+  function handleSubmitReview() {
+    if (!id || rating === 0) return
+    setRating(id, rating, reviewDraft.trim())
+    setShowReviewForm(false)
+    toast(reviewText ? 'Review updated!' : 'Review submitted!')
+  }
+
   function toast(msg: string) {
     setShowToast(msg)
     setTimeout(() => setShowToast(null), 2000)
@@ -165,6 +195,9 @@ export default function RecipeDetail() {
     )
   }
 
+  const otherReviews = reviews.filter((r) => !r.is_own && r.review_text)
+  const ownReview = reviews.find((r) => r.is_own)
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="sticky top-0 z-30 flex items-center justify-between bg-white px-4 py-3 shadow-sm">
@@ -180,6 +213,14 @@ export default function RecipeDetail() {
       <div className="space-y-3 p-4">
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <h2 className="text-2xl font-bold text-gray-900">{recipe.title}</h2>
+          {aggregate && aggregate.count > 0 && (
+            <div className="flex items-center gap-2 mt-2">
+              <StarRating rating={Math.round(aggregate.average)} size="sm" />
+              <span className="text-sm text-gray-500">
+                {aggregate.average.toFixed(1)} ({aggregate.count} {aggregate.count === 1 ? 'rating' : 'ratings'})
+              </span>
+            </div>
+          )}
           {recipe.source_url && (
             <a
               href={recipe.source_url}
@@ -195,31 +236,90 @@ export default function RecipeDetail() {
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-gray-900">Your Rating</p>
-            {rating > 0 && (
-              <button
-                onClick={() => setRating(id!, 0)}
-                className="text-xs text-gray-400 hover:text-gray-600"
-              >
-                Clear
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {rating > 0 && !showReviewForm && (
+                <button
+                  onClick={() => { setReviewDraft(reviewText); setShowReviewForm(true) }}
+                  className="text-xs text-[var(--spice-cayenne)] font-medium"
+                >
+                  {ownReview?.review_text ? 'Edit review' : 'Add review'}
+                </button>
+              )}
+              {rating > 0 && (
+                <button
+                  onClick={() => useRecipeRatingStore.getState().clearRating(id!)}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
           <div className="mt-2">
             <StarRating
               rating={rating}
-              onRate={(r) => setRating(id!, r)}
+              onRate={(r) => {
+                if (r > 0) {
+                  setRating(id!, r)
+                  if (!ownReview?.review_text) setShowReviewForm(true)
+                } else {
+                  useRecipeRatingStore.getState().clearRating(id!)
+                }
+              }}
               size="lg"
             />
           </div>
-          {aggregate && aggregate.count > 0 && (
-            <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
-              <StarRating rating={Math.round(aggregate.average)} size="sm" />
-              <span className="text-sm text-gray-500">
-                {aggregate.average.toFixed(1)} avg ({aggregate.count} {aggregate.count === 1 ? 'rating' : 'ratings'})
-              </span>
+          {ownReview?.review_text && !showReviewForm && (
+            <p className="mt-2 text-sm text-gray-600 italic">&ldquo;{ownReview.review_text}&rdquo;</p>
+          )}
+          {showReviewForm && rating > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <textarea
+                value={reviewDraft}
+                onChange={(e) => setReviewDraft(e.target.value.slice(0, 500))}
+                placeholder="Write a short review (optional)..."
+                rows={3}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-[var(--spice-cayenne)] resize-none"
+              />
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-gray-400">{reviewDraft.length}/500</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowReviewForm(false)}
+                    className="text-xs text-gray-500 px-3 py-1.5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSubmitReview}
+                    className="text-xs font-semibold text-white bg-[var(--spice-cayenne)] px-4 py-1.5 rounded-full"
+                  >
+                    {ownReview?.review_text ? 'Update' : 'Submit'}
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
+
+        {otherReviews.length > 0 && (
+          <div className="rounded-xl bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-gray-900 mb-3">
+              Reviews ({otherReviews.length})
+            </p>
+            <div className="space-y-3">
+              {otherReviews.map((review) => (
+                <div key={review.id} className="border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+                  <div className="flex items-center gap-2">
+                    <StarRating rating={review.rating} size="sm" />
+                    <span className="text-xs text-gray-400">{timeAgo(review.created_at)}</span>
+                  </div>
+                  <p className="text-sm text-gray-700 mt-1">{review.review_text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="rounded-xl bg-white p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">

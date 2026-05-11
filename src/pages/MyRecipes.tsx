@@ -17,6 +17,9 @@ export default function MyRecipes() {
   const [showRatedOnly, setShowRatedOnly] = useState(false)
   const ratings = useRecipeRatingStore((s) => s.ratings)
   const getRating = useRecipeRatingStore((s) => s.getRating)
+  const getAggregate = useRecipeRatingStore((s) => s.getAggregate)
+  const fetchAggregate = useRecipeRatingStore((s) => s.fetchAggregate)
+  const aggregates = useRecipeRatingStore((s) => s.aggregates)
 
   const displayedRecipes = useMemo(() => {
     let list = [...recipes]
@@ -41,7 +44,9 @@ export default function MyRecipes() {
       .select('*')
       .eq('user_id', user!.id)
       .order('created_at', { ascending: false })
-    setRecipes(data ?? [])
+    const loaded = data ?? []
+    setRecipes(loaded)
+    loaded.forEach((r) => fetchAggregate(r.id))
     setLoading(false)
   }
 
@@ -141,11 +146,19 @@ export default function MyRecipes() {
               <p className="text-sm text-gray-500 mt-1">
                 {recipe.original_servings} servings &middot; {recipe.ingredients.length} ingredients
               </p>
-              {getRating(recipe.id) > 0 && (
-                <div className="mt-2">
+              {getRating(recipe.id) > 0 ? (
+                <div className="mt-2 flex items-center gap-2">
                   <StarRating rating={getRating(recipe.id)} size="sm" />
+                  <span className="text-xs text-gray-400">You</span>
                 </div>
-              )}
+              ) : getAggregate(recipe.id) && getAggregate(recipe.id)!.count > 0 ? (
+                <div className="mt-2 flex items-center gap-2">
+                  <StarRating rating={Math.round(getAggregate(recipe.id)!.average)} size="sm" />
+                  <span className="text-xs text-gray-400">
+                    {getAggregate(recipe.id)!.average.toFixed(1)} ({getAggregate(recipe.id)!.count})
+                  </span>
+                </div>
+              ) : null}
               {recipe.source_url && (
                 <p className="text-xs text-gray-400 mt-2 truncate">{recipe.source_url}</p>
               )}
